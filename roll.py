@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from typing import Match
 from random import randint
 import re
@@ -6,8 +6,8 @@ import re
 NAME = "roll"
 VERSION = "1.0.0"
 
-RE_DICE = re.compile(r'(?P<dices>[\d]*)d(?P<faces>[\d]+)(?P<mod>[+-][\d]+)?')
-RE_FUDGE = re.compile(r'(?P<dices>[\d]*)f(?P<mod>[+-][\d]+)?')
+RE_DICE = re.compile(r'(?P<dices>[\d]*)[dD](?P<faces>[\d]+)(?P<mod>[+-][\d]+)?')
+RE_FUDGE = re.compile(r'(?P<dices>[\d]*)[fF](?P<mod>[+-][\d]+)?')
 DICES_DEFAULT = 1
 MOD_DEFAULT = 0
 DICES_MAX = 1000
@@ -28,7 +28,7 @@ def init_parser()->ArgumentParser:
 	)
 	parser.add_argument(
 		"formula", action='store',
-		metavar='formula', type=str,
+		metavar='formula', type=dice_formula,
 		help="The dice formula"
 	)
 	total_mod = parser.add_mutually_exclusive_group(required=False)
@@ -53,6 +53,17 @@ def init_parser()->ArgumentParser:
 		help="Return the results sorted"
 	)
 	return parser
+
+def dice_formula(formula:str):
+	match = re.match(RE_DICE, formula)
+	if match and formula == match.group():
+		return formula
+
+	match = re.match(RE_FUDGE, formula)
+	if match and formula == match.group():
+		return formula
+
+	raise ArgumentTypeError(f"invalid dice formula: '{formula}'")
 
 
 def parse_dice(match:Match)->tuple[int, int, int]:
@@ -115,10 +126,10 @@ def throw_fudge_dice()->int:
 def main()->None:
 	parser = init_parser()
 	args = parser.parse_args()
-	formula = args.formula.lower()
+	formula = args.formula
 
-	match = re.match(RE_DICE, formula)
-	if match and formula == match.group():
+	if 'd' in formula or 'D' in formula:
+		match = re.match(RE_DICE, formula)
 		dices, faces, mod = parse_dice(match)
 		total, results = throw_dices(dices, faces)
 		total, results = parse_args(total, results, args)
@@ -126,17 +137,14 @@ def main()->None:
 		print_results(match.group(), total, results)
 		return
 
-	match = re.match(RE_FUDGE, formula)
-	if match and formula== match.group():
+	if 'f' in formula or 'F' in formula:
+		match = re.match(RE_FUDGE, formula)
 		dices, mod = parse_fudge(match)
 		total, results = throw_fudge_dices(dices)
 		total, results = parse_args(total, results, args)
 		total += mod
 		print_results(match.group(), total, results)
 		return
-
-	raise SystemExit(f"{NAME}: error: argument number: invalid dice formula: '{args.formula}'")
-
 
 if __name__ == '__main__':
 	main()
