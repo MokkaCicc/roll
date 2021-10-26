@@ -15,7 +15,7 @@ FACES_MAX = 1000000
 MOD_MAX = 1000000
 
 
-def init_parser()->ArgumentParser:
+def init_parser() -> ArgumentParser:
 	parser = ArgumentParser(
 		prog=NAME,
 		description="Roll some dices",
@@ -54,7 +54,7 @@ def init_parser()->ArgumentParser:
 	)
 	return parser
 
-def dice_formula(formula:str):
+def dice_formula(formula: str) -> str:
 	match = re.match(RE_DICE, formula)
 	if match and formula == match.group():
 		return formula
@@ -66,7 +66,7 @@ def dice_formula(formula:str):
 	raise ArgumentTypeError(f"invalid dice formula: '{formula}'")
 
 
-def parse_dice(match:Match)->tuple[int, int, int]:
+def parse_dice(match: Match) -> tuple[int, int, int]:
 	dices = DICES_DEFAULT if not match.group('dices') else int(match.group('dices'))
 	faces = int(match.group('faces'))
 	mod = MOD_DEFAULT if not match.group('mod') else int(match.group('mod'))
@@ -74,7 +74,7 @@ def parse_dice(match:Match)->tuple[int, int, int]:
 		raise SystemExit(f"{NAME}: error: argument number: number too big")
 	return dices, faces, mod
 
-def parse_fudge(match:Match)->tuple[int, int]:
+def parse_fudge(match: Match) -> tuple[int, int]:
 	dices = DICES_DEFAULT if not match.group('dices') else int(match.group('dices'))
 	mod = MOD_DEFAULT if not match.group('mod') else int(match.group('mod'))
 	if dices > DICES_MAX or mod > MOD_MAX:
@@ -82,7 +82,7 @@ def parse_fudge(match:Match)->tuple[int, int]:
 	return dices, mod
 
 # need some refacto
-def parse_args(total:int, results:list[int], args:Namespace)->tuple[int, int]:
+def parse_args(total: int, results: list[int], args: Namespace) -> tuple[int, int]:
 	sorted_results = list(results)
 	sorted_results.sort()
 	if args.lower or args.highest:
@@ -97,33 +97,33 @@ def parse_args(total:int, results:list[int], args:Namespace)->tuple[int, int]:
 		return total, sorted_results
 	return total, results
 
-def print_results(formula:str, total:int, results:list[int])->None:
+def print_results(formula: str, total: int, results: list[int]) -> None:
 	print(f"{formula}: {total} -> {results}")
 
 
-def throw_dices(dices:int, faces:int)->tuple[int, list[int]]:
+def throw_dices(dices: int, faces: int) -> tuple[int, list[int]]:
 	results = list()
 	for i in range(dices):
 		results.append(throw_dice(faces))
 	total = sum(results)
 	return total, results
 
-def throw_dice(faces:int)->int:
+def throw_dice(faces: int) -> int:
 	return randint(0, faces)
 
 
-def throw_fudge_dices(dices:int)->tuple[int, list[int]]:
+def throw_fudge_dices(dices: int) -> tuple[int, list[int]]:
 	results = list()
 	for i in range(dices):
 		results.append(throw_fudge_dice())
 	total = sum(results)
 	return total, results
 
-def throw_fudge_dice()->int:
+def throw_fudge_dice() -> int:
 	return randint(-1, 1)
 
 
-def main()->None:
+def main() -> None:
 	parser = init_parser()
 	args = parser.parse_args()
 	formula = args.formula
